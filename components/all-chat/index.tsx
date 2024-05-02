@@ -60,7 +60,7 @@ const Index = () => {
                   wordBreak: "break-all",
                 }}
               >
-                Home
+                All Messages
               </Typography>
             </Box>
           </Grid>
