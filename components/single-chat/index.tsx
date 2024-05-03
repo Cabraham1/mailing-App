@@ -1,16 +1,67 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import ReusableMessageButton from "../reusable-message-section";
 import { Avatar, Box, Grid, Typography } from "@mui/material";
 import { KeyboardBackspace } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
 import LoaderBackdrop from "../common/loader";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Import useQueryClient
+import {
+  ReadMessage,
+  getAllMessage,
+  getSingleMessage,
+} from "../../service/allMessages";
+import { useRouter } from "next/navigation";
 
-const Index = () => {
+const Index = ({ params }: { params: any }) => {
   const router = useRouter();
+  const { id } = params;
+
+  // Get a reference to the query client
+  const queryClient = useQueryClient();
+
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey[0] === "allMessages" ||
+        (query.queryKey[0] === "singleMessages" && query.queryKey[1] === id),
+    });
+  };
+
+  // Mark message as read when component mounts
+  useEffect(() => {
+    const markMessageAsRead = async () => {
+      try {
+        await ReadMessage(id);
+        invalidateQueries(); 
+      } catch (error) {
+        console.error("Error marking message as read:", error);
+      }
+    };
+    markMessageAsRead();
+  }, [id]);
+
+  const { data } = useQuery({
+    queryKey: ["allMessages"],
+    queryFn: () => getAllMessage(),
+  });
+
+  const { data: singleChat } = useQuery({
+    queryKey: ["singleMessages", id],
+    queryFn: () => getSingleMessage(id),
+  });
+
+  const { isLoading } = useQuery({
+    queryKey: ["readMessage", id],
+    queryFn: () => ReadMessage(id),
+  });
+
+  // Filter unread messages
+  const unreadMessages = data
+    ? data.filter((message: any) => !message.isRead)
+    : [];
   return (
     <>
-      {/* <LoaderBackdrop /> */}
+      {isLoading && <LoaderBackdrop />}
       <Box
         sx={{
           marginY: "20px",
@@ -34,11 +85,13 @@ const Index = () => {
                   sx={{
                     cursor: "pointer",
                   }}
-                  onClick={() => router.back()}
+                  onClick={() =>
+                    router.push("/dashboard/messages/home/all-chat")
+                  }
                 />
                 <Avatar
-                  alt={"John Doe"}
-                  src="https://www.w3schools.com/howto/img_avatar.png"
+                  alt={singleChat?.name || ""}
+                  src={singleChat?.image || ""}
                   sx={{ width: 56, height: 56 }}
                 />
                 <Typography
@@ -50,7 +103,7 @@ const Index = () => {
                     textOverflow: "ellipsis",
                   }}
                 >
-                  John Doe
+                  {singleChat?.name || ""}
                 </Typography>
               </Box>
             </Box>
@@ -71,7 +124,7 @@ const Index = () => {
               <Box>
                 <ReusableMessageButton
                   label="Unread"
-                  count={3}
+                  count={unreadMessages.length || 0}
                   color="#246BEB"
                   backgroundColor="#E7F0FF"
                 />
@@ -79,7 +132,7 @@ const Index = () => {
               <Box>
                 <ReusableMessageButton
                   label="All Messages"
-                  count={12}
+                  count={data?.length || 0}
                   color="#246BEB"
                   backgroundColor="#F9FAFB"
                 />
@@ -106,8 +159,8 @@ const Index = () => {
             }}
           >
             <Avatar
-              alt={"John Doe"}
-              src="https://www.w3schools.com/howto/img_avatar.png"
+              alt={singleChat?.name || ""}
+              src={singleChat?.image || ""}
               sx={{ width: 56, height: 56 }}
             />
             <Typography
@@ -120,8 +173,7 @@ const Index = () => {
                 wordWrap: "break-word",
               }}
             >
-              This is an example message. Lorem ipsum dolor sit amet,
-              consectetur adipiscing elit.
+             {singleChat?.content || ""}
             </Typography>
           </Box>
         </Box>

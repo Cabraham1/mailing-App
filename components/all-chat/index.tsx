@@ -5,47 +5,30 @@ import React from "react";
 import ReusableMessageButton from "../reusable-message-section";
 import ReusableAllMessageSection from "../reuable-all-chat";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { getAllMessage } from "../../service/allMessages";
+import LoaderBackdrop from "../common/loader";
 
 const Index = () => {
+  const { data, isLoading} = useQuery({
+    queryKey: ["allMessages"],
+    queryFn: () => getAllMessage(),
+  });
+
+  // Filter unread messages
+  const unreadMessages = data
+    ? data.filter((message: any) => !message.isRead)
+    : [];
+
   const router = useRouter();
-  const messages = [
-    {
-      id: 1,
-      name: "John Doe",
-      message: "Hello, how are you doing today?",
-      time: "12:30 PM",
-      notificationCount: 2,
-      isRead: false,
-      image: "https://www.w3schools.com/howto/img_avatar.png",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      message: "Hey there! Did you see the latest updates?",
-      time: "1:45 PM",
-      notificationCount: 0,
-      isRead: true,
-      image: "https://www.example.com/avatar2.png",
-    },
-    {
-      id: 3,
-      name: "Alice Johnson",
-      message: "I'm excited for the upcoming event!",
-      time: "2:20 PM",
-      notificationCount: 5,
-      isRead: false,
-      image: "https://www.example.com/avatar3.png",
-    },
-    // Add more mock message objects as needed
-  ];
 
   const handleMessageClick = (message: any) => {
-    console.log("Message clicked: ", message);
-    router.push(`/dashboard/messages/home/all-chat/${message.id}`);
+    router.push(`/dashboard/messages/home/all-chat/${message._id}`);
   };
 
   return (
     <>
+      {isLoading && <LoaderBackdrop />}
       <Box sx={{ marginY: "20px" }}>
         <Grid container spacing={4}>
           <Grid sx={{ minHeight: "100%" }} item xs={12} lg={8}>
@@ -80,7 +63,7 @@ const Index = () => {
               <Box>
                 <ReusableMessageButton
                   label="Unread"
-                  count={3}
+                  count={unreadMessages.length || 0}
                   color="#246BEB"
                   backgroundColor="#E7F0FF"
                 />
@@ -88,7 +71,7 @@ const Index = () => {
               <Box>
                 <ReusableMessageButton
                   label="All Messages"
-                  count={12}
+                  count={data?.length || 0}
                   color="#246BEB"
                   backgroundColor="#F9FAFB"
                 />
@@ -104,19 +87,30 @@ const Index = () => {
           py: "20px",
         }}
       >
-        {messages.map((message, index) => (
-          <Box onClick={() => handleMessageClick(message)} key={index}>
-            <ReusableAllMessageSection
-              key={index}
-              name={message.name}
-              message={message.message}
-              time={message.time}
-              notificationCount={message.notificationCount}
-              isRead={message.isRead}
-              image={message.image}
-            />
-          </Box>
-        ))}
+        {data?.map(
+          (
+            message: {
+              name: string;
+              content: string;
+              time: string;
+              isRead: boolean | undefined;
+              image: string;
+            },
+            index: React.Key | null | undefined
+          ) => (
+            <Box onClick={() => handleMessageClick(message)} key={index}>
+              <ReusableAllMessageSection
+                key={index}
+                name={message.name}
+                message={message.content}
+                time={message.time}
+                notificationCount={message.isRead === false ? 1 : 0}
+                isRead={message.isRead}
+                image={message.image}
+              />
+            </Box>
+          )
+        )}
       </Box>
     </>
   );

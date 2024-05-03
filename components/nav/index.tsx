@@ -16,8 +16,6 @@ const Nav: React.FC<{
   const path = usePathname();
   const router = useRouter();
 
- 
-
   return (
     <Box
       sx={{
@@ -141,7 +139,7 @@ const Nav: React.FC<{
               </Box>
             ))}
             <UserAccount
-              image=""
+              image="https://avatars.githubusercontent.com/u/68823331?v=4"
               name="Abraham Christopher"
               role="Developer"
             />

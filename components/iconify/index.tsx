@@ -22,4 +22,6 @@ const Iconify = forwardRef(
   )
 );
 
+Iconify.displayName = 'Iconify';
+
 export default Iconify;

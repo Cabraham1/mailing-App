@@ -2,18 +2,31 @@
 import { Box, Button, Grid, Typography } from "@mui/material";
 import Image from "next/image";
 import React from "react";
-import { Email, MarkEmailUnread } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import ReusableMessageButton from "../reusable-message-section";
+import { useQuery } from "@tanstack/react-query";
+import { getAllMessage } from "../../service/allMessages";
+import LoaderBackdrop from "../common/loader";
 
 const Index = () => {
   const router = useRouter();
+
+  const { data, isLoading, status } = useQuery({
+    queryKey: ["allMessages"],
+    queryFn: () => getAllMessage(),
+  });
+
+  // Filter unread messages
+  const unreadMessages = data
+    ? data.filter((message: any) => !message.isRead)
+    : [];
 
   const OpenAllChats = () => {
     router.push("/dashboard/messages/home/all-chat");
   };
   return (
     <>
+      {isLoading && <LoaderBackdrop />}
       <Box sx={{ mt: "20px" }}>
         <Grid container spacing={4}>
           <Grid sx={{ minHeight: "100%" }} item xs={12} lg={8}>
@@ -48,7 +61,7 @@ const Index = () => {
               <Box>
                 <ReusableMessageButton
                   label="Unread"
-                  count={3}
+                  count={unreadMessages?.length || 0}
                   color="#246BEB"
                   backgroundColor="#E7F0FF"
                 />
@@ -56,7 +69,7 @@ const Index = () => {
               <Box>
                 <ReusableMessageButton
                   label="All Messages"
-                  count={12}
+                  count={data?.length || 0}
                   color="#246BEB"
                   backgroundColor="#F9FAFB"
                 />
@@ -122,7 +135,7 @@ const Index = () => {
               wordBreak: "break-all",
             }}
           >
-            You have 3 unread messages!
+            You have {unreadMessages?.length || 0} unread messages!
           </Typography>
         </Box>
         <Box>
